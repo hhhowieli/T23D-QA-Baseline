@@ -18,31 +18,31 @@ from torch.utils.data import DataLoader
 from QAdataset.Mate3D import Mate3DData, QACollator
 # from.QAdataset.AIG3DC import AIG3DCData
 # from model.vit_w_clip_depth import ViTWClip
-# from model.vit_w_clip import ViTWClip
-from model.vit_w_clip_hyper import ViTWClip
+from model.vit_w_clip import ViTWClip
+# from model.vit_w_clip_hyper import ViTWClip
 from logger import Logger
 
 def split_data(info_all, train_ratio=0.8):
-
+    
     model_data = {}
-
+    
     for info in info_all:
         model = info["gen_model"].split("-")[0]
         if model not in model_data:
             model_data[model] = []
         model_data[model].append(info)
-
+    
     train_data = []
     val_data = []
-
+    
     for model in model_data:
         data = model_data[model]
         np.random.shuffle(data)
-
+        
         train_size = int(len(data) * train_ratio)
         train_data.extend(data[:train_size])
         val_data.extend(data[train_size:])
-
+    
     return train_data, val_data
 
 def seed_everything(seed):
@@ -59,9 +59,9 @@ def seed_everything(seed):
 
 
 def train(model, loader, val_loader, optimizer, lr_scheduler, max_epoch, logger=None):
-
+    
     model.train()
-
+    
     best_metric = 0
     best_res = None
 
@@ -92,13 +92,13 @@ def train(model, loader, val_loader, optimizer, lr_scheduler, max_epoch, logger=
             mos = mos.float().cuda()
 
             # pred, cos_loss = model(model_images, model_d_images, prompt)
-
+        
             pred, loss_cos = model(model_images, model_d_images, order, prompt, prompt_zh)
 
             loss = F.mse_loss(pred, mos)
             total_loss += loss.detach().item()
             avg_loss = total_loss / (1+i)
-
+            
             tqdm_item.set_postfix({"loss": f"{avg_loss:.4f}", "lr": f"{lr_scheduler.get_last_lr()[0]:.7f}"})
 
             loss.backward()
@@ -108,15 +108,15 @@ def train(model, loader, val_loader, optimizer, lr_scheduler, max_epoch, logger=
         lr_scheduler.step()
 
         metric, result = test(model, val_loader, epoch, logger=logger)
-
+        
         if metric>best_metric:
             logger.log(f"Best Epoch: {epoch}")
             best_res = result
             best_metric = metric
-
+        
     return best_res
-
-
+        
+        
 
 def test(model, loader, epoch=None, logger=None):
     model.eval()
@@ -153,7 +153,7 @@ def test(model, loader, epoch=None, logger=None):
             # pred, _ = model(model_images, model_d_images, order, prompt)
             pred, _ = model(model_images, model_d_images, order, prompt, prompt_zh)
             pred = pred.cpu().numpy()
-
+            
             # print(pred.shape, mos.shape)
 
         mos = mos.numpy()
@@ -177,7 +177,7 @@ def test(model, loader, epoch=None, logger=None):
         logger.log(f"Epoch {epoch}: Texture PLCC: {texture_plcc:.4f}, SRCC: {texture_srcc:.4f}, KRCC: {texture_krcc:.4f}, RMSE: {texture_rmse:.4f}")
         logger.log(f"Epoch {epoch}: Align PLCC: {align_plcc:.4f}, SRCC: {align_srcc:.4f}, KRCC: {align_krcc:.4f}, RMSE: {align_rmse:.4f}")
         logger.log(f"Epoch {epoch}: Overall PLCC: {overall_plcc:.4f}, SRCC: {overall_srcc:.4f}, KRCC: {overall_krcc:.4f}, RMSE: {overall_rmse:.4f}")
-
+    
     if epoch is not None:
         model.train()
 
@@ -187,7 +187,7 @@ def test(model, loader, epoch=None, logger=None):
         "Align": {"plcc": align_plcc, "srcc": align_srcc, "krcc": align_krcc, "rmse": align_rmse},
         "Overall": {"plcc": overall_plcc, "srcc": overall_srcc, "krcc": overall_krcc, "rmse": overall_rmse}
     }
-
+        
     return geo_srcc + texture_srcc + align_srcc + overall_srcc, result
 
 
@@ -204,28 +204,28 @@ if __name__=="__main__":
 
     seed = args.seed
     seed_everything(seed)
-
+    
     transforms = T.Compose([
         T.Resize((224, 224)),
         T.ToTensor(),
         T.Normalize(mean=[0.48145466, 0.4578275, 0.40821073], std=[0.26862954, 0.26130258, 0.27577711]),
     ])
-
+    
     logger = Logger(
         f"logs/log_mate3d"
     )
-
+    
     logger.log(f"CUDA_DEVICES: {os.environ['CUDA_VISIBLE_DEVICES']}", verbos=False)
     logger.log(f"seed: {seed}", verbos=False)
     logger.log(f"Message: {args.msg}", verbos=False)
-
-
+    
+        
     # train_info = pd.read_csv(os.path.join(args.info_dir, f"train_{csv_file}.csv")).to_dict("records")
     # test_info = pd.read_csv(os.path.join(args.info_dir, f"test_{csv_file}.csv")).to_dict("records")
-
-    with open("mos_all.json", "r") as f:
+    
+    with open("/home/lhh/codes/AIG3DCQA/OBenchmark/mos_all.json", "r") as f:
         info_all = json.load(f)
-
+        
     train_info, val_info = split_data(info_all)
     print(len(train_info), len(val_info))
     # train_dataset = AIG3DCData(train_info, transforms=transforms)
@@ -236,9 +236,9 @@ if __name__=="__main__":
 
     train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True, drop_last=True, num_workers=6, collate_fn=QACollator())
     val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, num_workers=6, collate_fn=QACollator())
-
+    
     model = ViTWClip().cuda()
-
+    
     encoder_params = []
     other_params = []
     # 遍历所有参数

@@ -1,6 +1,5 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "7"
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 import time
 import random
 import argparse
@@ -15,9 +14,8 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 from torch.utils.data import DataLoader
 
 from QAdataset.Mate3D import Mate3DData, QACollator
-# from model.vit_w_clip_depth import ViTWClip
-# from model.vit_w_clip import ViTWClip
-from model.vit_w_clip_hyper import ViTWClip
+from model.vit_w_clip import ViTWClip
+
 from logger import Logger
 
 
