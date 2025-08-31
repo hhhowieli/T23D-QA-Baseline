@@ -193,7 +193,7 @@ if __name__=="__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", type=int, default=2025)
-    parser.add_argument("--data_dir", type=str, default="data/ag3d")
+    parser.add_argument("--data_dir", type=str, default="data/t23d-qa")
     parser.add_argument("--info_dir", type=str, default="data/csvfiles")
     parser.add_argument("--csv_file", type=str, default="12345")
     parser.add_argument("--msg", type=str, default="train")
