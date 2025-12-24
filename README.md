@@ -1,4 +1,7 @@
 
+[Project](https://t23d-qa.github.io/)
+[Paper](https://dl.acm.org/doi/10.1145/3746027.3758302)
+
 # T23D-QA-Baseline
 
 Offical code of the baseline model of T23D-QA.
